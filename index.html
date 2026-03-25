@@ -195,7 +195,7 @@
 
         async function translate(q, key) {
             // 切換至 v1 穩定版 Endpoint 避免 404
-            const url = `https://generativelanguage.googleapis.com/v1/models/gemini-1.5-flash:generateContent?key=${key}`;
+            const url = `https://generativelanguage.googleapis.com/v1/models/gemini-2.5-flash:generateContent?key=${key}`;
             
             try {
                 const resp = await fetch(url, {
@@ -207,7 +207,7 @@
                 });
 
                 if (resp.status === 404) {
-                    throw new Error("AI 服務請求失敗 (HTTP 404)：請確認您的 API 金鑰是否具有存取 gemini-1.5-flash 的權限。");
+                    throw new Error("AI 服務請求失敗 (HTTP 404)：請確認您的 API 金鑰是否具有存取 gemini-2.5-flash 的權限。");
                 }
                 if (resp.status === 403) throw new Error("API Key 權限錯誤或已被禁用。");
                 if (!resp.ok) throw new Error(`AI 服務請求失敗 (HTTP ${resp.status})`);
