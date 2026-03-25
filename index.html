@@ -135,7 +135,6 @@
             if (key) {
                 localStorage.setItem('gemini_api_key', key);
                 toggleKeySettings();
-                // 使用自訂 UI 取代傳統 alert 以提升 iOS 體驗
                 console.log('API Key has been saved locally.');
             }
         }
@@ -188,14 +187,15 @@
                 console.error("Search Error:", err);
                 loader.classList.add('hidden');
                 errBox.classList.remove('hidden');
-                document.getElementById('errorDetail').innerText = err.message || "發生未知錯誤，請稍後再試。";
+                document.getElementById('errorDetail').innerText = err.message || "發生未知錯誤。";
             } finally {
                 searchBtn.disabled = false;
             }
         }
 
         async function translate(q, key) {
-            const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${key}`;
+            // 切換至 v1 穩定版 Endpoint 避免 404
+            const url = `https://generativelanguage.googleapis.com/v1/models/gemini-1.5-flash:generateContent?key=${key}`;
             
             try {
                 const resp = await fetch(url, {
@@ -206,21 +206,22 @@
                     })
                 });
 
+                if (resp.status === 404) {
+                    throw new Error("AI 服務請求失敗 (HTTP 404)：請確認您的 API 金鑰是否具有存取 gemini-1.5-flash 的權限。");
+                }
                 if (resp.status === 403) throw new Error("API Key 權限錯誤或已被禁用。");
                 if (!resp.ok) throw new Error(`AI 服務請求失敗 (HTTP ${resp.status})`);
 
                 const data = await resp.json();
-                
-                // 強化：安全存取 API 回傳欄位
                 const res = data.candidates?.[0]?.content?.parts?.[0]?.text?.trim();
                 
                 if (!res || res === "UNKNOWN") {
-                    throw new Error("AI 無法辨識該名稱，請檢查拼字或嘗試更通用的名稱。");
+                    throw new Error("AI 無法辨識該名稱，請嘗試更通用的名稱。");
                 }
                 return res;
             } catch (e) {
                 if (e.message.includes("Failed to fetch")) {
-                    throw new Error("網路連線失敗，請檢查網路狀態。");
+                    throw new Error("網路連線失敗，請檢查網路狀態或瀏覽器安全設定。");
                 }
                 throw e;
             }
