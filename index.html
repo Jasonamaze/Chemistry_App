@@ -208,7 +208,7 @@
 
         async function translate(q, key) {
             // 切換為更通用的 gemini-1.5-flash，並使用 v1beta 端點以獲得最佳相容性
-            const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${key}`;
+            const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${key}`;
             
             try {
                 const resp = await fetch(url, {
@@ -220,7 +220,7 @@
                 });
 
                 if (resp.status === 404) {
-                    throw new Error("AI 服務請求失敗 (HTTP 404)：您的金鑰可能不支援 gemini-1.5-flash 或所在地區受限。");
+                    throw new Error("AI 服務請求失敗 (HTTP 404)：您的金鑰可能不支援 gemini-2.5-flash 或所在地區受限。");
                 }
                 if (resp.status === 403) throw new Error("API Key 權限錯誤、已被禁用，或「網站限制」設定有誤。");
                 if (!resp.ok) throw new Error(`AI 服務請求失敗 (HTTP ${resp.status})`);
