@@ -17,13 +17,15 @@
         .loader { border: 3px solid #f3f3f3; border-top: 3px solid #3b82f6; border-radius: 50%; width: 24px; height: 24px; animation: spin 1s linear infinite; display: inline-block; }
         @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
         .safe-bottom { padding-bottom: env(safe-area-inset-bottom); }
+        .animate-fade-in { animation: fadeIn 0.5s ease-in; }
+        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
     </style>
 </head>
 <body class="bg-gray-100 min-h-screen p-4">
 
     <div class="max-w-2xl mx-auto bg-white rounded-3xl shadow-lg p-6 mt-4 relative">
         <!-- 設定按鈕 -->
-        <button onclick="toggleKeySettings()" class="absolute top-4 right-4 text-gray-400 hover:text-blue-600 transition">
+        <button onclick="toggleKeySettings()" class="absolute top-4 right-4 text-gray-400 hover:text-blue-600 transition" title="設定 API Key">
             <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37a1.724 1.724 0 002.572-1.065z" />
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
@@ -31,7 +33,9 @@
         </button>
 
         <div class="text-center mb-6">
-            <h1 class="text-2xl font-bold text-blue-900">🧪 有機分子結構查詢</h1>
+            <h1 class="text-2xl font-bold text-blue-900 flex justify-center items-center gap-2">
+                <span>🧪</span> 有機分子結構查詢
+            </h1>
             <p class="text-gray-500 text-sm mt-1">高中基礎有機化學工具</p>
         </div>
 
@@ -39,14 +43,14 @@
             <input type="text" id="chemName" placeholder="輸入名稱 (如：乙酸乙酯)" 
                 class="flex-1 border border-gray-300 rounded-xl px-4 py-3 focus:ring-2 focus:ring-blue-500 outline-none shadow-sm text-base">
             <button onclick="searchCompound()" id="searchBtn" 
-                class="bg-blue-600 text-white font-bold px-5 py-3 rounded-xl shadow-md active:scale-95 transition">查詢</button>
+                class="bg-blue-600 text-white font-bold px-5 py-3 rounded-xl shadow-md active:scale-95 transition disabled:opacity-50">查詢</button>
         </div>
 
         <!-- 快速建議 -->
         <div class="flex flex-wrap gap-2 mb-6">
-            <button onclick="quickSearch('2-丁烯')" class="text-xs bg-blue-50 text-blue-600 px-3 py-1.5 rounded-full font-medium">2-丁烯</button>
-            <button onclick="quickSearch('鄰二甲苯')" class="text-xs bg-blue-50 text-blue-600 px-3 py-1.5 rounded-full font-medium">鄰二甲苯</button>
-            <button onclick="quickSearch('阿斯匹靈')" class="text-xs bg-blue-50 text-blue-600 px-3 py-1.5 rounded-full font-medium">阿斯匹靈</button>
+            <button onclick="quickSearch('2-丁烯')" class="text-xs bg-blue-50 text-blue-600 px-3 py-1.5 rounded-full font-medium hover:bg-blue-100 transition">2-丁烯</button>
+            <button onclick="quickSearch('鄰二甲苯')" class="text-xs bg-blue-50 text-blue-600 px-3 py-1.5 rounded-full font-medium hover:bg-blue-100 transition">鄰二甲苯</button>
+            <button onclick="quickSearch('阿斯匹靈')" class="text-xs bg-blue-50 text-blue-600 px-3 py-1.5 rounded-full font-medium hover:bg-blue-100 transition">阿斯匹靈</button>
         </div>
 
         <!-- 結果區 -->
@@ -57,8 +61,8 @@
             </div>
 
             <div id="content" class="hidden text-center animate-fade-in">
-                <p id="origInput" class="text-blue-400 text-[10px] font-bold uppercase mb-1"></p>
-                <h2 id="displayTitle" class="text-xl font-bold text-gray-800 mb-4 tracking-wide"></h2>
+                <p id="origInput" class="text-blue-400 text-[10px] font-bold uppercase mb-1 tracking-tighter"></p>
+                <h2 id="displayTitle" class="text-xl font-bold text-gray-800 mb-4 tracking-wide uppercase"></h2>
                 
                 <div class="bg-gray-50 rounded-2xl p-4 mb-4 border border-gray-100 shadow-inner flex justify-center items-center min-h-[250px]">
                     <img id="molImage" src="" alt="結構圖" class="max-w-full h-auto drop-shadow-sm opacity-0 transition-opacity duration-500" onload="this.classList.remove('opacity-0')">
@@ -78,15 +82,15 @@
         </div>
 
         <!-- 金鑰設定彈窗 -->
-        <div id="keyModal" class="hidden fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
+        <div id="keyModal" class="hidden fixed inset-0 bg-black bg-opacity-60 flex items-center justify-center p-4 z-50">
             <div class="bg-white rounded-2xl p-6 w-full max-w-sm shadow-2xl">
-                <h3 class="font-bold text-lg mb-2">設定 API Key</h3>
-                <p class="text-xs text-gray-500 mb-4">為了安全，請將您的 Gemini API Key 存放在此瀏覽器中。此金鑰不會上傳到 GitHub。</p>
+                <h3 class="font-bold text-lg mb-2">🔑 設定 API Key</h3>
+                <p class="text-xs text-gray-500 mb-4 leading-relaxed">為了安全，請將您的 Gemini API Key 存放在此瀏覽器中。此金鑰僅會儲存在本地端，不會被上傳至伺服器。</p>
                 <input type="password" id="apiKeyInput" placeholder="在此輸入您的 API Key" 
-                    class="w-full border rounded-xl px-4 py-3 mb-4 text-sm">
+                    class="w-full border rounded-xl px-4 py-3 mb-4 text-sm focus:ring-2 focus:ring-blue-500 outline-none">
                 <div class="flex gap-2">
-                    <button onclick="saveApiKey()" class="flex-1 bg-blue-600 text-white py-2 rounded-xl font-bold">儲存</button>
-                    <button onclick="toggleKeySettings()" class="flex-1 bg-gray-100 text-gray-600 py-2 rounded-xl font-bold">取消</button>
+                    <button onclick="saveApiKey()" class="flex-1 bg-blue-600 text-white py-2.5 rounded-xl font-bold active:scale-95 transition">儲存金鑰</button>
+                    <button onclick="toggleKeySettings()" class="flex-1 bg-gray-100 text-gray-600 py-2.5 rounded-xl font-bold active:scale-95 transition">取消</button>
                 </div>
             </div>
         </div>
@@ -94,13 +98,13 @@
         <!-- 錯誤區 -->
         <div id="errorMessage" class="hidden mt-4 p-4 bg-red-50 border-l-4 border-red-500 text-red-700 rounded-r-xl">
             <p id="errorTitle" class="font-bold text-sm">查詢失敗</p>
-            <p id="errorDetail" class="text-xs mt-1">請檢查名稱或金鑰設定。</p>
+            <p id="errorDetail" class="text-xs mt-1 italic"></p>
         </div>
     </div>
 
     <footer class="mt-8 text-[10px] text-gray-400 text-center safe-bottom pb-4">
         Powered by Gemini & PubChem API<br>
-        點擊右上角齒輪設定 API Key
+        點擊右上角齒輪圖示可隨時更改 API Key
     </footer>
 
     <script>
@@ -111,8 +115,8 @@
         const errBox = document.getElementById('errorMessage');
         const keyModal = document.getElementById('keyModal');
         const apiKeyInput = document.getElementById('apiKeyInput');
+        const searchBtn = document.getElementById('searchBtn');
 
-        // 初始化：檢查是否有存過的金鑰
         window.onload = () => {
             const savedKey = localStorage.getItem('gemini_api_key');
             if (!savedKey) {
@@ -131,7 +135,8 @@
             if (key) {
                 localStorage.setItem('gemini_api_key', key);
                 toggleKeySettings();
-                alert('金鑰已儲存在本機瀏覽器。');
+                // 使用自訂 UI 取代傳統 alert 以提升 iOS 體驗
+                console.log('API Key has been saved locally.');
             }
         }
 
@@ -146,71 +151,103 @@
             }
 
             document.getElementById('chemName').blur();
+            searchBtn.disabled = true;
             resArea.classList.remove('hidden');
             loader.classList.remove('hidden');
             content.classList.add('hidden');
             errBox.classList.add('hidden');
-            loadText.innerText = "AI 正在分析中...";
+            loadText.innerText = "AI 正在分析名稱與結構...";
 
             try {
-                // 1. AI 翻譯
+                // 1. AI 翻譯與識別
                 const iupacName = await translate(name, apiKey);
-                loadText.innerText = "正在獲取分子資訊...";
+                loadText.innerText = `搜尋資料庫：${iupacName}...`;
 
-                // 2. PubChem 查詢
+                // 2. PubChem 查詢 CID
                 const cid = await getCID(iupacName) || await getCID(name);
-                if (!cid) throw new Error("資料庫找不到該物質，請嘗試更精確的名稱。");
+                if (!cid) throw new Error("在化學資料庫中找不到該物質，請嘗試輸入更準確的學名。");
 
-                // 3. 獲取細節
+                // 3. 獲取分子細節
                 const details = await getDetails(cid);
+                if (!details) throw new Error("無法取得分子屬性資料。");
                 
-                document.getElementById('origInput').innerText = `搜尋: ${name}`;
+                // 更新顯示內容
+                document.getElementById('origInput').innerText = `搜尋關鍵字: ${name}`;
                 document.getElementById('displayTitle').innerText = iupacName;
-                document.getElementById('formula').innerText = details.MolecularFormula;
-                document.getElementById('molWeight').innerText = details.MolecularWeight + " g/mol";
-                document.getElementById('molImage').src = `https://pubchem.ncbi.nlm.nih.gov/rest/pug/compound/cid/${cid}/PNG?width=600&height=600`;
+                document.getElementById('formula').innerText = details.MolecularFormula || "不詳";
+                document.getElementById('molWeight').innerText = details.MolecularWeight ? (details.MolecularWeight + " g/mol") : "不詳";
+                
+                const img = document.getElementById('molImage');
+                img.classList.add('opacity-0');
+                img.src = `https://pubchem.ncbi.nlm.nih.gov/rest/pug/compound/cid/${cid}/PNG?width=600&height=600`;
 
                 loader.classList.add('hidden');
                 content.classList.remove('hidden');
 
             } catch (err) {
+                console.error("Search Error:", err);
                 loader.classList.add('hidden');
                 errBox.classList.remove('hidden');
-                document.getElementById('errorDetail').innerText = err.message;
+                document.getElementById('errorDetail').innerText = err.message || "發生未知錯誤，請稍後再試。";
+            } finally {
+                searchBtn.disabled = false;
             }
         }
 
         async function translate(q, key) {
             const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${key}`;
-            const resp = await fetch(url, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                    contents: [{ parts: [{ text: `你是一位有機化學專家。請將「${q}」轉為標準英文 IUPAC 名稱。只回傳該英文名稱，不要有標點。如果無法識別，回傳 UNKNOWN。` }] }]
-                })
-            });
-            if (resp.status === 403) throw new Error("API Key 無效或已被禁用。");
-            const data = await resp.json();
-            const res = data.candidates[0].content.parts[0].text.trim();
-            if (res === "UNKNOWN") throw new Error("AI 無法識別此名稱。");
-            return res;
+            
+            try {
+                const resp = await fetch(url, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        contents: [{ parts: [{ text: `你是一位有機化學專家。請將「${q}」轉換為標準的英文 IUPAC 名稱。只需回傳英文名稱，不可包含標點符號。如果完全無法識別，請回傳 UNKNOWN。` }] }]
+                    })
+                });
+
+                if (resp.status === 403) throw new Error("API Key 權限錯誤或已被禁用。");
+                if (!resp.ok) throw new Error(`AI 服務請求失敗 (HTTP ${resp.status})`);
+
+                const data = await resp.json();
+                
+                // 強化：安全存取 API 回傳欄位
+                const res = data.candidates?.[0]?.content?.parts?.[0]?.text?.trim();
+                
+                if (!res || res === "UNKNOWN") {
+                    throw new Error("AI 無法辨識該名稱，請檢查拼字或嘗試更通用的名稱。");
+                }
+                return res;
+            } catch (e) {
+                if (e.message.includes("Failed to fetch")) {
+                    throw new Error("網路連線失敗，請檢查網路狀態。");
+                }
+                throw e;
+            }
         }
 
         async function getCID(name) {
             try {
                 const r = await fetch(`https://pubchem.ncbi.nlm.nih.gov/rest/pug/compound/name/${encodeURIComponent(name)}/cids/JSON`);
+                if (!r.ok) return null;
                 const d = await r.json();
-                return d.IdentifierList.CID[0];
+                return d.IdentifierList?.CID?.[0] || null;
             } catch { return null; }
         }
 
         async function getDetails(cid) {
-            const r = await fetch(`https://pubchem.ncbi.nlm.nih.gov/rest/pug/compound/cid/${cid}/property/MolecularFormula,MolecularWeight,CanonicalSMILES/JSON`);
-            const d = await r.json();
-            return d.PropertyTable.Properties[0];
+            try {
+                const r = await fetch(`https://pubchem.ncbi.nlm.nih.gov/rest/pug/compound/cid/${cid}/property/MolecularFormula,MolecularWeight,CanonicalSMILES/JSON`);
+                if (!r.ok) return null;
+                const d = await r.json();
+                return d.PropertyTable?.Properties?.[0] || null;
+            } catch { return null; }
         }
 
-        function quickSearch(v) { document.getElementById('chemName').value = v; searchCompound(); }
+        function quickSearch(v) { 
+            document.getElementById('chemName').value = v; 
+            searchCompound(); 
+        }
     </script>
 </body>
 </html>
