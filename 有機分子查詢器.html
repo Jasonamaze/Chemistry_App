@@ -1,0 +1,264 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>高中基礎有機化學結構查詢 (AI 增強診斷版)</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700&display=swap');
+        body {
+            font-family: 'Noto+Sans+TC', sans-serif;
+            background-color: #f0f4f8;
+        }
+        .mol-card {
+            transition: all 0.3s ease;
+        }
+        .mol-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 20px rgba(0,0,0,0.1);
+        }
+        .loader {
+            border: 4px solid #f3f3f3;
+            border-top: 4px solid #3b82f6;
+            border-radius: 50%;
+            width: 30px;
+            height: 30px;
+            animation: spin 1s linear infinite;
+        }
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+    </style>
+</head>
+<body class="min-h-screen flex flex-col items-center py-10 px-4">
+
+    <div class="max-w-2xl w-full bg-white rounded-2xl shadow-xl p-8">
+        <h1 class="text-3xl font-bold text-center text-blue-800 mb-2">🧪 有機分子結構查詢</h1>
+        <p class="text-gray-500 text-center mb-8">透過 AI 智慧識別，查詢高中常見有機物</p>
+
+        <!-- 搜尋區域 -->
+        <div class="flex flex-col gap-2 mb-8">
+            <div class="flex gap-2">
+                <input 
+                    type="text" 
+                    id="chemName" 
+                    placeholder="輸入中文或英文名稱..." 
+                    class="flex-1 px-4 py-3 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-500 text-lg"
+                    onkeypress="if(event.key === 'Enter') searchCompound()"
+                >
+                <button 
+                    onclick="searchCompound()"
+                    id="searchBtn"
+                    class="bg-blue-600 hover:bg-blue-700 text-white px-6 py-3 rounded-lg font-bold transition duration-200 disabled:bg-blue-300"
+                >
+                    查詢
+                </button>
+            </div>
+            <p id="statusHint" class="text-xs text-gray-400 italic px-1"></p>
+        </div>
+
+        <!-- 快速建議標籤 -->
+        <div class="mb-8">
+            <p class="text-sm text-gray-400 mb-2">試試看：</p>
+            <div class="flex flex-wrap gap-2">
+                <button onclick="quickSearch('2-丁烯')" class="px-3 py-1 bg-blue-50 text-blue-600 rounded-full text-sm hover:bg-blue-100">2-丁烯</button>
+                <button onclick="quickSearch('鄰二甲苯')" class="px-3 py-1 bg-blue-50 text-blue-600 rounded-full text-sm hover:bg-blue-100">鄰二甲苯</button>
+                <button onclick="quickSearch('乙酸異戊酯')" class="px-3 py-1 bg-blue-50 text-blue-600 rounded-full text-sm hover:bg-blue-100">乙酸異戊酯</button>
+                <button onclick="quickSearch('對乙醯氨基酚')" class="px-3 py-1 bg-blue-50 text-blue-600 rounded-full text-sm hover:bg-blue-100">對乙醯氨基酚</button>
+                <button onclick="quickSearch('草酸')" class="px-3 py-1 bg-blue-50 text-blue-600 rounded-full text-sm hover:bg-blue-100">草酸</button>
+            </div>
+        </div>
+
+        <!-- 結果顯示區域 -->
+        <div id="resultArea" class="hidden">
+            <div class="mol-card border rounded-xl p-6 bg-white">
+                <div id="loading" class="flex flex-col justify-center items-center py-10 hidden">
+                    <div class="loader"></div>
+                    <span id="loadingText" class="ml-3 mt-4 text-gray-500 text-center">AI 正在分析分子結構...</span>
+                </div>
+                
+                <div id="content" class="text-center">
+                    <div class="mb-2">
+                        <span id="origName" class="text-sm text-blue-500 font-medium"></span>
+                    </div>
+                    <h2 id="displayTitle" class="text-2xl font-bold text-gray-800 mb-4">分子名稱</h2>
+                    <div class="flex justify-center bg-gray-50 rounded-lg p-4 mb-4 relative min-h-[250px] items-center">
+                        <img id="molImage" src="" alt="分子結構" class="max-w-full h-auto" onload="this.classList.remove('opacity-0')" onerror="this.src='https://via.placeholder.com/300?text=Image+Load+Error'">
+                    </div>
+                    <div class="grid grid-cols-2 gap-4 text-left text-sm">
+                        <div class="bg-blue-50 p-3 rounded-lg">
+                            <span class="block text-blue-400 font-bold uppercase text-xs">分子式</span>
+                            <span id="formula" class="text-blue-800 font-medium">-</span>
+                        </div>
+                        <div class="bg-gray-50 p-3 rounded-lg">
+                            <span class="block text-gray-400 font-bold uppercase text-xs">分子量</span>
+                            <span id="molWeight" class="text-gray-800 font-medium">-</span>
+                        </div>
+                        <div class="bg-gray-50 p-3 rounded-lg col-span-2">
+                            <span class="block text-gray-400 font-bold uppercase text-xs">SMILES (結構編碼)</span>
+                            <span id="smiles" class="text-gray-800 font-mono break-all text-xs">-</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 錯誤提示 -->
+        <div id="errorMessage" class="hidden mt-4 p-4 bg-red-50 border-l-4 border-red-500 text-red-700">
+            <p id="errorTitle" class="font-bold text-lg">發生錯誤</p>
+            <p id="errorDetail" class="text-sm">請確認名稱是否正確，或檢查網路連線與 API 金鑰。</p>
+            <p id="technicalError" class="text-[10px] mt-2 text-red-400 font-mono italic"></p>
+        </div>
+    </div>
+
+    <footer class="mt-8 text-gray-400 text-sm text-center">
+        技術支援：Gemini API & PubChem API
+    </footer>
+
+    <script>
+        // 注意：如果你在本地執行，請確保這裡填入了正確的 API Key
+        // 如果執行失敗，請檢查模型名稱是否為 gemini-1.5-flash
+        const apiKey = "AIzaSyDfRvxSUnH9ncLG5097q86Z6qMHAKSkuy0"; 
+        
+        const resultArea = document.getElementById('resultArea');
+        const loading = document.getElementById('loading');
+        const loadingText = document.getElementById('loadingText');
+        const content = document.getElementById('content');
+        const errorMessage = document.getElementById('errorMessage');
+        const technicalError = document.getElementById('technicalError');
+        const chemNameInput = document.getElementById('chemName');
+        const searchBtn = document.getElementById('searchBtn');
+
+        async function fetchWithRetry(url, options, retries = 3, backoff = 1000) {
+            try {
+                const response = await fetch(url, options);
+                if (!response.ok) {
+                    const errorJson = await response.json().catch(() => ({}));
+                    throw new Error(errorJson.error?.message || `HTTP ${response.status}`);
+                }
+                return await response.json();
+            } catch (error) {
+                if (retries > 0 && !error.message.includes('403') && !error.message.includes('400')) {
+                    await new Promise(resolve => setTimeout(resolve, backoff));
+                    return fetchWithRetry(url, options, retries - 1, backoff * 2);
+                }
+                throw error;
+            }
+        }
+
+        async function translateToIUPAC(inputName) {
+            if (!apiKey) throw new Error("API Key 未設定。請在程式碼中填入你的 Google AI Studio 金鑰。");
+            
+            const systemPrompt = "你是一位有機化學專家。請將使用者提供的任何化學名稱轉換為標準的英文 IUPAC 名稱。只輸出該英文名稱，不要有任何標點符號。如果無法識別，請輸出 'UNKNOWN'。";
+            const userQuery = `化學名稱: "${inputName}"`;
+
+            const payload = {
+                contents: [{ parts: [{ text: userQuery }] }],
+                systemInstruction: { parts: [{ text: systemPrompt }] }
+            };
+
+            // 注意：如果這個預覽模型在你的地區或帳號不可用，請將模型名稱改為 "gemini-1.5-flash"
+            const modelName = "gemini-2.5-flash"; 
+            const url = `https://generativelanguage.googleapis.com/v1beta/models/${modelName}:generateContent?key=${apiKey}`;
+            
+            const result = await fetchWithRetry(url, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(payload)
+            });
+            
+            const text = result.candidates?.[0]?.content?.parts?.[0]?.text?.trim() || "UNKNOWN";
+            if (text.includes("UNKNOWN")) throw new Error("AI 無法識別此化學物質名稱。");
+            return text;
+        }
+
+        async function searchCompound() {
+            const rawName = chemNameInput.value.trim();
+            if (!rawName) return;
+
+            console.log(`開始搜尋: ${rawName}`);
+            
+            // UI 初始化
+            searchBtn.disabled = true;
+            resultArea.classList.remove('hidden');
+            loading.classList.remove('hidden');
+            loadingText.innerText = "AI 正在分析分子結構...";
+            content.classList.add('hidden');
+            errorMessage.classList.add('hidden');
+            technicalError.innerText = "";
+
+            try {
+                // 第一步：AI 翻譯
+                let iupacName;
+                try {
+                    iupacName = await translateToIUPAC(rawName);
+                    console.log(`AI 翻譯結果: ${iupacName}`);
+                } catch (e) {
+                    throw new Error(`AI 翻譯失敗: ${e.message}`);
+                }
+
+                loadingText.innerText = `正在向資料庫檢索: ${iupacName}...`;
+
+                // 第二步：PubChem CID 檢索
+                const cidUrl = `https://pubchem.ncbi.nlm.nih.gov/rest/pug/compound/name/${encodeURIComponent(iupacName)}/cids/JSON`;
+                const cidRes = await fetch(cidUrl);
+                
+                if (!cidRes.ok) {
+                    // 如果英文不行，最後嘗試原始名稱
+                    const retryRes = await fetch(`https://pubchem.ncbi.nlm.nih.gov/rest/pug/compound/name/${encodeURIComponent(rawName)}/cids/JSON`);
+                    if (!retryRes.ok) throw new Error('化學資料庫中找不到此物質。');
+                    const retryData = await retryRes.json();
+                    await processData(retryData.IdentifierList.CID[0], rawName, rawName);
+                } else {
+                    const cidData = await cidRes.json();
+                    await processData(cidData.IdentifierList.CID[0], iupacName, rawName);
+                }
+
+            } catch (error) {
+                console.error("搜尋過程出錯:", error);
+                loading.classList.add('hidden');
+                errorMessage.classList.remove('hidden');
+                document.getElementById('errorTitle').innerText = "搜尋失敗";
+                document.getElementById('errorDetail').innerText = error.message.includes("API Key") ? "請確認您的 API Key 是否正確設定。" : error.message;
+                technicalError.innerText = `Debug Info: ${error.message}`;
+                searchBtn.disabled = false;
+            }
+        }
+
+        async function processData(cid, resolvedName, originalInput) {
+            try {
+                const detailResponse = await fetch(`https://pubchem.ncbi.nlm.nih.gov/rest/pug/compound/cid/${cid}/property/MolecularFormula,MolecularWeight,CanonicalSMILES/JSON`);
+                if (!detailResponse.ok) throw new Error("無法獲取分子詳細屬性。");
+                
+                const detailData = await detailResponse.json();
+                const props = detailData.PropertyTable.Properties[0];
+
+                document.getElementById('origName').innerText = `搜尋: ${originalInput}`;
+                document.getElementById('displayTitle').innerText = resolvedName;
+                document.getElementById('formula').innerText = props.MolecularFormula;
+                document.getElementById('molWeight').innerText = props.MolecularWeight + ' g/mol';
+                document.getElementById('smiles').innerText = props.CanonicalSMILES;
+                
+                const img = document.getElementById('molImage');
+                img.classList.add('opacity-0');
+                img.src = `https://pubchem.ncbi.nlm.nih.gov/rest/pug/compound/cid/${cid}/PNG?width=500&height=500`;
+
+                loading.classList.add('hidden');
+                content.classList.remove('hidden');
+                console.log("搜尋成功完成。");
+            } catch (e) {
+                throw new Error(`獲取分子細節失敗: ${e.message}`);
+            } finally {
+                searchBtn.disabled = false;
+            }
+        }
+
+        function quickSearch(val) {
+            chemNameInput.value = val;
+            searchCompound();
+        }
+    </script>
+</body>
+</html>
