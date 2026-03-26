@@ -43,7 +43,7 @@
             <input type="text" id="chemName" placeholder="輸入：甲基環戊烯、乙酸乙酯..." 
                 class="flex-1 bg-slate-50 border-0 rounded-2xl px-5 py-4 focus:ring-2 focus:ring-blue-400 outline-none text-slate-700 shadow-inner">
             <button onclick="searchCompound()" id="searchBtn" 
-                class="bg-blue-600 hover:bg-blue-700 text-white font-bold px-6 py-4 rounded-2xl shadow-lg active:scale-95 transition-all disabled:opacity-50">
+                class="bg-blue-600 hover:bg-blue-700 text-white font-bold px-4 py-4 rounded-2xl shadow-lg active:scale-95 transition-all disabled:opacity-50">
                 查詢
             </button>
         </div>
@@ -59,7 +59,7 @@
                 <p id="origInput" class="text-blue-500 text-[10px] font-bold uppercase tracking-widest mb-2"></p>
                 <h2 id="displayTitle" class="text-2xl font-black text-slate-800 mb-6 tracking-tight"></h2>
                 
-                <div class="bg-slate-50 rounded-3xl p-6 mb-6 border border-slate-100 flex justify-center items-center min-h-[300px] shadow-inner">
+                <div class="bg-slate-50 rounded-3xl p-4 mb-6 border border-slate-100 flex justify-center items-center min-h-[300px] shadow-inner">
                     <img id="molImage" src="" alt="分子結構圖" class="max-w-full h-auto drop-shadow-xl opacity-0 transition-opacity duration-700" onload="this.classList.remove('opacity-0')">
                 </div>
 
@@ -93,7 +93,7 @@
                 <h3 class="font-bold text-xl text-slate-800 mb-2">🔑 API 金鑰設定</h3>
                 <p class="text-xs text-slate-400 mb-6">請輸入 Google AI Studio 的金鑰。此金鑰僅存於您的瀏覽器中。</p>
                 <input type="password" id="apiKeyInput" placeholder="在此輸入您的 API Key" 
-                    class="w-full bg-slate-50 border-0 rounded-2xl px-5 py-4 mb-6 text-sm focus:ring-2 focus:ring-blue-400 outline-none">
+                    class="w-full bg-slate-50 border-0 rounded-2xl px-3 py-4 mb-6 text-sm focus:ring-2 focus:ring-blue-400 outline-none">
                 <div class="flex flex-col gap-3">
                     <div class="flex gap-3">
                         <button onclick="saveApiKey()" class="flex-1 bg-blue-600 text-white py-3 rounded-2xl font-bold shadow-lg transition-transform active:scale-95">儲存</button>
