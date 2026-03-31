@@ -20,93 +20,87 @@
         @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
     </style>
 </head>
-<body class="min-h-screen p-4 flex flex-col items-center">
+<body class="min-h-screen p-3 flex flex-col items-center">
 
-    <div class="max-w-xl w-full bg-white rounded-3xl shadow-2xl p-6 mt-4 relative border border-gray-100">
-        <!-- 設定齒輪 -->
-        <button onclick="toggleKeySettings()" class="absolute top-6 right-6 text-gray-400 hover:text-blue-500 transition-colors">
+    <div class="max-w-xl w-full bg-white rounded-3xl shadow-2xl p-4 mt-2 relative border border-gray-100">
+        
+        <button onclick="toggleKeySettings()" class="absolute top-4 right-4 text-gray-400 hover:text-blue-500 transition-colors">
             <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37a1.724 1.724 0 002.572-1.065z" />
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
             </svg>
         </button>
 
-        <div class="text-center mb-8">
-            <h1 class="text-2xl font-bold text-slate-800 flex justify-center items-center gap-2">
-                <span class="text-3xl">🧪</span> 有機分子查詢
+        <div class="text-center mb-6">
+            <h1 class="text-xl font-bold text-slate-800 flex justify-center items-center gap-2">
+                <span class="text-2xl">🧪</span> 有機分子查詢
             </h1>
-            <p class="text-slate-400 text-xs mt-2 font-medium tracking-wide">AI 輔助化學結構檢索</p>
+            <p class="text-slate-400 text-[10px] mt-1 font-medium tracking-wide">GEMINI 2.5 FLASH 驅動</p>
         </div>
 
-        <!-- 搜尋框 -->
-        <div class="flex gap-2 mb-8">
-            <input type="text" id="chemName" placeholder="輸入：甲基環戊烯、..." 
-                class="flex-1 bg-slate-50 border-0 rounded-2xl px-2 py-4 focus:ring-2 focus:ring-blue-400 outline-none text-slate-700 shadow-inner">
+        <div class="flex flex-nowrap gap-2 mb-6">
+            <input type="text" id="chemName" placeholder="輸入名稱..." 
+                class="flex-1 min-w-0 bg-slate-50 border-0 rounded-xl px-3 py-3 focus:ring-2 focus:ring-blue-400 outline-none text-slate-700 shadow-inner text-sm">
             <button onclick="searchCompound()" id="searchBtn" 
-                class="bg-blue-600 hover:bg-blue-700 text-white font-bold px-5 py-4 rounded-2xl shadow-lg active:scale-95 transition-all disabled:opacity-50">
+                class="w-20 bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 rounded-xl shadow-lg active:scale-95 transition-all disabled:opacity-50 text-sm flex-shrink-0">
                 查詢
             </button>
         </div>
 
-        <!-- 結果區 -->
-        <div id="resultArea" class="hidden border-t border-slate-50 pt-6">
-            <div id="loading" class="text-center py-12">
+        <div id="resultArea" class="hidden border-t border-slate-50 pt-4">
+            <div id="loading" class="text-center py-8">
                 <div class="loader"></div>
-                <p id="loadingText" class="text-slate-400 text-sm mt-4 font-medium italic">正在與 AI 討論結構...</p>
+                <p id="loadingText" class="text-slate-400 text-xs mt-3 font-medium italic">連線中...</p>
             </div>
 
             <div id="content" class="hidden text-center animate-fade-in">
-                <p id="origInput" class="text-blue-500 text-[10px] font-bold uppercase tracking-widest mb-2"></p>
-                <h2 id="displayTitle" class="text-2xl font-black text-slate-800 mb-6 tracking-tight"></h2>
+                <p id="origInput" class="text-blue-50 text-[8px] bg-blue-400 inline-block px-2 py-0.5 rounded-full font-bold uppercase tracking-widest mb-2"></p>
+                <h2 id="displayTitle" class="text-lg font-black text-slate-800 mb-4 tracking-tight uppercase"></h2>
                 
-                <div class="bg-slate-50 rounded-3xl p-4 mb-6 border border-slate-100 flex justify-center items-center min-h-[300px] shadow-inner">
-                    <img id="molImage" src="" alt="分子結構圖" class="max-w-full h-auto drop-shadow-xl opacity-0 transition-opacity duration-700" onload="this.classList.remove('opacity-0')">
+                <div class="bg-slate-50 rounded-2xl p-4 mb-4 border border-slate-100 flex justify-center items-center min-h-[250px] shadow-inner">
+                    <img id="molImage" src="" alt="分子圖" class="max-w-full h-auto drop-shadow-lg opacity-0 transition-opacity duration-700" onload="this.classList.remove('opacity-0')">
                 </div>
 
-                <div class="grid grid-cols-2 gap-4 text-left">
-                    <div class="bg-blue-50 p-4 rounded-2xl border border-blue-100">
-                        <span class="text-[10px] text-blue-400 font-black block uppercase mb-1">分子式</span>
-                        <span id="formula" class="text-blue-900 font-bold text-base tracking-tight"></span>
+                <div class="grid grid-cols-2 gap-3 text-left">
+                    <div class="bg-blue-50 p-3 rounded-xl border border-blue-100">
+                        <span class="text-[8px] text-blue-400 font-black block uppercase mb-0.5">分子式</span>
+                        <span id="formula" class="text-blue-900 font-bold text-sm tracking-tight"></span>
                     </div>
-                    <div class="bg-slate-50 p-4 rounded-2xl border border-slate-100">
-                        <span class="text-[10px] text-slate-400 font-black block uppercase mb-1">分子量</span>
-                        <span id="molWeight" class="text-slate-800 font-bold text-base tracking-tight"></span>
+                    <div class="bg-slate-50 p-3 rounded-xl border border-slate-100">
+                        <span class="text-[8px] text-slate-400 font-black block uppercase mb-0.5">分子量</span>
+                        <span id="molWeight" class="text-slate-800 font-bold text-sm tracking-tight"></span>
                     </div>
                 </div>
             </div>
         </div>
 
-        <!-- 錯誤診斷區 -->
-        <div id="errorMessage" class="hidden mt-6 p-5 bg-rose-50 border-l-4 border-rose-500 text-rose-800 rounded-2xl shadow-sm">
-            <p id="errorTitle" class="font-black text-sm uppercase tracking-wider mb-1"></p>
-            <p id="errorDetail" class="text-xs leading-relaxed opacity-90"></p>
-            
-            <div id="aiResponseBox" class="mt-4 p-3 bg-white bg-opacity-60 rounded-xl border border-rose-100 hidden">
-                <p class="text-[9px] font-black text-rose-400 uppercase mb-1">AI 原始回應內容：</p>
-                <p id="aiRawText" class="text-[10px] font-mono break-all text-slate-600 leading-relaxed"></p>
+        <div id="errorMessage" class="hidden mt-4 p-4 bg-rose-50 border-l-4 border-rose-500 text-rose-800 rounded-xl shadow-sm">
+            <p id="errorTitle" class="font-black text-[10px] uppercase tracking-wider mb-1"></p>
+            <p id="errorDetail" class="text-[10px] leading-relaxed opacity-90"></p>
+            <div id="aiResponseBox" class="mt-3 p-2 bg-white bg-opacity-60 rounded-lg border border-rose-100 hidden">
+                <p class="text-[8px] font-black text-rose-300 uppercase mb-0.5">AI 回覆：</p>
+                <p id="aiRawText" class="text-[9px] font-mono break-all text-slate-600"></p>
             </div>
         </div>
 
-        <!-- 設定彈窗 -->
         <div id="keyModal" class="hidden fixed inset-0 bg-slate-900/60 backdrop-blur-sm flex items-center justify-center p-4 z-50">
-            <div class="bg-white rounded-3xl p-8 w-full max-w-sm shadow-2xl">
-                <h3 class="font-bold text-xl text-slate-800 mb-2">🔑 API 金鑰設定</h3>
-                <p class="text-xs text-slate-400 mb-6">請輸入 Google AI Studio 的金鑰。此金鑰僅存於您的瀏覽器中。</p>
+            <div class="bg-white rounded-3xl p-6 w-full max-w-sm shadow-2xl">
+                <h3 class="font-bold text-lg text-slate-800 mb-2">🔑 API 設定</h3>
                 <input type="password" id="apiKeyInput" placeholder="在此輸入您的 API Key" 
-                    class="w-full bg-slate-50 border-0 rounded-2xl px-3 py-4 mb-6 text-sm focus:ring-2 focus:ring-blue-400 outline-none">
-                <div class="flex flex-col gap-3">
-                    <div class="flex gap-3">
-                        <button onclick="saveApiKey()" class="flex-1 bg-blue-600 text-white py-3 rounded-2xl font-bold shadow-lg transition-transform active:scale-95">儲存</button>
-                        <button onclick="toggleKeySettings()" class="flex-1 bg-slate-100 text-slate-600 py-3 rounded-2xl font-bold transition-transform active:scale-95">取消</button>
+                    class="w-full bg-slate-50 border-0 rounded-2xl px-4 py-3 mb-4 text-sm outline-none">
+                <div class="flex flex-col gap-2">
+                    <div class="flex gap-2">
+                        <button onclick="saveApiKey()" class="flex-1 bg-blue-600 text-white py-3 rounded-2xl font-bold active:scale-95 transition">儲存</button>
+                        <button onclick="toggleKeySettings()" class="flex-1 bg-slate-100 text-slate-600 py-3 rounded-2xl font-bold active:scale-95 transition">取消</button>
                     </div>
-                    <button onclick="clearApiKey()" class="w-full text-rose-500 py-2 text-xs font-bold hover:bg-rose-50 rounded-xl transition-colors">清除已存金鑰</button>
+                    <button onclick="clearApiKey()" class="w-full text-rose-500 py-2 text-[10px] font-bold">清除金鑰</button>
                 </div>
             </div>
         </div>
     </div>
 
-    <footer class="mt-10 text-[10px] text-slate-300 font-medium tracking-widest text-center uppercase">
-        Powered by Gemini 2.5 Flash & PubChem
+    <footer class="mt-6 text-[8px] text-slate-300 font-medium tracking-widest text-center uppercase">
+        © 2026 GEMINI 2.5 FLASH & PUBCHEM
     </footer>
 
     <script>
@@ -131,7 +125,7 @@
             if (key) { localStorage.setItem('gemini_api_key', key); toggleKeySettings(); }
         }
         function clearApiKey() {
-            if (confirm("確定清除金鑰？")) { localStorage.removeItem('gemini_api_key'); document.getElementById('apiKeyInput').value = ""; }
+            if (confirm("確定清除？")) { localStorage.removeItem('gemini_api_key'); document.getElementById('apiKeyInput').value = ""; }
         }
 
         async function searchCompound() {
@@ -146,28 +140,30 @@
             content.classList.add('hidden');
             errBox.classList.add('hidden');
             aiBox.classList.add('hidden');
-            loadText.innerText = "正在分析化學結構...";
+            loadText.innerText = "AI 分析中...";
 
             try {
                 // 1. AI 轉譯
-                let iupacName;
-                try {
-                    iupacName = await translate(name, apiKey);
-                } catch (e) {
-                    // 這裡會抓到 404 等網路錯誤或是 AI 邏輯錯誤
-                    throw { stage: "AI 判讀階段", message: e.message, raw: e.raw };
+                let iupacName = await translate(name, apiKey);
+                loadText.innerText = `檢索：${iupacName}...`;
+
+                // 2. 搜尋 CID (含 Poly 容錯機制)
+                let cid = await getCID(iupacName) || await getCID(name);
+                
+                // --- 修正 3：Poly 智慧容錯 ---
+                if (!cid && iupacName.toLowerCase().startsWith("poly")) {
+                    const retryName = iupacName.replace(/^poly/i, "").trim();
+                    loadText.innerText = `高分子重試：${retryName}...`;
+                    cid = await getCID(retryName);
+                    if (cid) iupacName = retryName; // 更新標題為單體名稱
                 }
 
-                loadText.innerText = `資料庫搜尋中：${iupacName}...`;
-
-                // 2. 搜尋 CID
-                const cid = await getCID(iupacName) || await getCID(name);
-                if (!cid) throw { stage: "資料庫搜尋階段", message: `在 PubChem 中找不到「${iupacName}」。請確認名稱是否正確，或嘗試加上位置編號（如 1-甲基環戊烯）。` };
+                if (!cid) throw { stage: "資料庫階段", message: "找不到該化學物質。高分子建議直接查詢單體名稱。" };
 
                 // 3. 獲取資料
                 const details = await getDetails(cid);
                 
-                document.getElementById('origInput').innerText = `搜尋: ${name}`;
+                document.getElementById('origInput').innerText = name;
                 document.getElementById('displayTitle').innerText = iupacName;
                 document.getElementById('formula').innerText = details?.MolecularFormula || "N/A";
                 document.getElementById('molWeight').innerText = details?.MolecularWeight ? (details.MolecularWeight + " g/mol") : "N/A";
@@ -177,32 +173,26 @@
                 content.classList.remove('hidden');
 
             } catch (err) {
-                console.error(err);
                 loader.classList.add('hidden');
                 errBox.classList.remove('hidden');
                 document.getElementById('errorTitle').innerText = `錯誤：${err.stage || "系統"}`;
                 document.getElementById('errorDetail').innerText = err.message;
-                if (err.raw) {
-                    aiBox.classList.remove('hidden');
-                    aiRawText.innerText = err.raw;
-                }
+                if (err.raw) { aiBox.classList.remove('hidden'); aiRawText.innerText = err.raw; }
             } finally {
                 searchBtn.disabled = false;
             }
         }
 
         async function translate(q, key) {
-            // 使用版 gemini-2.5-flash 避免 404
+            // --- 修正 2：改用 gemini-2.5-flash ---
             const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${key}`;
             
             const prompt = `你是一位有機化學專家。
-            任務：將使用者輸入的中文或英文化學名稱轉換為標準的英文 IUPAC 名稱。
-            規則：
-            1. 只回傳英文名稱，禁止任何標點、解釋、句子。
-            2. 若名稱有多種位置異構物可能（例如「甲基環戊烯」），請自動選擇最穩定、最常見的異構物（例如 1-Methylcyclopentene）。
-            3. 輸出範例：1-Methylcyclopentene
-            4. 若無法辨識，回傳：UNKNOWN
-            使用者輸入：${q}`;
+            任務：將使用者的輸入（中文/俗名）轉為標準英文 IUPAC 名稱。
+            規則：只回傳英文名，禁止標點或解釋。
+            異構物處理：自動選擇最常見者（如甲基環戊烯選 1-Methylcyclopentene）。
+            若無法辨識，回傳：UNKNOWN
+            輸入：${q}`;
 
             try {
                 const resp = await fetch(url, {
@@ -211,9 +201,6 @@
                     body: JSON.stringify({ contents: [{ parts: [{ text: prompt }] }] })
                 });
 
-                if (resp.status === 404) {
-                    throw new Error("HTTP 404 (找不到模型)。您的金鑰所在地區可能不支援此模型路徑，請檢查 API 設定。");
-                }
                 if (!resp.ok) {
                     const errData = await resp.json();
                     throw new Error(errData.error?.message || `HTTP ${resp.status}`);
@@ -222,15 +209,11 @@
                 const data = await resp.json();
                 const res = data.candidates?.[0]?.content?.parts?.[0]?.text?.trim();
                 
-                if (!res || res.includes("UNKNOWN")) throw { message: "AI 無法精確辨識此化合物名稱。", raw: res || "無內容回傳" };
-                
-                // 去除可能的多餘引號
+                if (!res || res.includes("UNKNOWN")) throw { message: "AI 無法辨識名稱。", raw: res || "無回應" };
                 return res.replace(/["']/g, "").split('\n')[0];
             } catch (e) {
-                // 如果是我們自己丟出的物件錯誤，直接往外傳
                 if (e.stage) throw e;
-                // 否則封裝成統一格式
-                throw { message: e.message, raw: "網路連線或金鑰權限問題" };
+                throw { stage: "AI 階段", message: e.message, raw: "可能是 API 金鑰權限問題" };
             }
         }
 
@@ -251,8 +234,6 @@
                 return d.PropertyTable?.Properties?.[0];
             } catch { return null; }
         }
-
-        function quickSearch(v) { document.getElementById('chemName').value = v; searchCompound(); }
     </script>
 </body>
 </html>
