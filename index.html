@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>有機化學分子結構查詢</title>
+    <title>有機化學分子查詢</title>
     
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="default">
@@ -35,11 +35,11 @@
             <h1 class="text-xl font-bold text-slate-800 flex justify-center items-center gap-2">
                 <span class="text-2xl">🧪</span> 有機分子查詢
             </h1>
-            <p class="text-slate-400 text-[10px] mt-1 font-medium tracking-wide">GEMINI 2.5 FLASH 驅動</p>
+            <p class="text-slate-400 text-[10px] mt-1 font-medium tracking-wide uppercase">Gemini 2.5 Flash Lite 驅動</p>
         </div>
 
         <div class="flex flex-nowrap gap-2 mb-6">
-            <input type="text" id="chemName" placeholder="輸入名稱..." 
+            <input type="text" id="chemName" placeholder="輸入名稱 (如 PMMA)..." 
                 class="flex-1 min-w-0 bg-slate-50 border-0 rounded-xl px-3 py-3 focus:ring-2 focus:ring-blue-400 outline-none text-slate-700 shadow-inner text-sm">
             <button onclick="searchCompound()" id="searchBtn" 
                 class="w-20 bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 rounded-xl shadow-lg active:scale-95 transition-all disabled:opacity-50 text-sm flex-shrink-0">
@@ -78,7 +78,7 @@
             <p id="errorTitle" class="font-black text-[10px] uppercase tracking-wider mb-1"></p>
             <p id="errorDetail" class="text-[10px] leading-relaxed opacity-90"></p>
             <div id="aiResponseBox" class="mt-3 p-2 bg-white bg-opacity-60 rounded-lg border border-rose-100 hidden">
-                <p class="text-[8px] font-black text-rose-300 uppercase mb-0.5">AI 回覆：</p>
+                <p class="text-[8px] font-black text-rose-300 uppercase mb-0.5">AI 回覆內容：</p>
                 <p id="aiRawText" class="text-[9px] font-mono break-all text-slate-600"></p>
             </div>
         </div>
@@ -100,7 +100,7 @@
     </div>
 
     <footer class="mt-6 text-[8px] text-slate-300 font-medium tracking-widest text-center uppercase">
-        © 2026 GEMINI 2.5 FLASH & PUBCHEM
+        © 2026 GEMINI 2.5 FLASH LITE & PUBCHEM
     </footer>
 
     <script>
@@ -143,22 +143,23 @@
             loadText.innerText = "AI 分析中...";
 
             try {
-                // 1. AI 轉譯
+                // 1. AI 轉譯 (新增縮寫保護提示)
                 let iupacName = await translate(name, apiKey);
                 loadText.innerText = `檢索：${iupacName}...`;
 
-                // 2. 搜尋 CID (含 Poly 容錯機制)
+                // 2. 搜尋 CID (加入更強大的淨化機制)
                 let cid = await getCID(iupacName) || await getCID(name);
                 
-                // --- 修正 3：Poly 智慧容錯 ---
-                if (!cid && iupacName.toLowerCase().startsWith("poly")) {
-                    const retryName = iupacName.replace(/^poly/i, "").trim();
-                    loadText.innerText = `高分子重試：${retryName}...`;
-                    cid = await getCID(retryName);
-                    if (cid) iupacName = retryName; // 更新標題為單體名稱
+                // 容錯邏輯：如果查不到且包含 Poly 字眼
+                if (!cid && iupacName.toLowerCase().includes("poly")) {
+                    // 淨化：移除 Poly 並且移除所有括號 ()
+                    let cleanName = iupacName.replace(/poly/i, "").replace(/[()]/g, "").trim();
+                    loadText.innerText = `重試(淨化)：${cleanName}...`;
+                    cid = await getCID(cleanName);
+                    if (cid) iupacName = cleanName;
                 }
 
-                if (!cid) throw { stage: "資料庫階段", message: "找不到該化學物質。高分子建議直接查詢單體名稱。" };
+                if (!cid) throw { stage: "資料庫階段", message: "找不到該物質。若為聚合物縮寫，請確認 AI 是否回傳了帶有括號的名稱。" };
 
                 // 3. 獲取資料
                 const details = await getDetails(cid);
@@ -184,14 +185,16 @@
         }
 
         async function translate(q, key) {
-            // --- 修正 2：改用 gemini-2.5-flash ---
-            const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${key}`;
+            // 切換至 gemini-2.5-flash-lite
+            const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-lite:generateContent?key=${key}`;
             
             const prompt = `你是一位有機化學專家。
-            任務：將使用者的輸入（中文/俗名）轉為標準英文 IUPAC 名稱。
-            規則：只回傳英文名，禁止標點或解釋。
-            異構物處理：自動選擇最常見者（如甲基環戊烯選 1-Methylcyclopentene）。
-            若無法辨識，回傳：UNKNOWN
+            任務：將輸入轉為標準英文 IUPAC 名稱。
+            規則：
+            1. 只回傳英文名，禁止標點。
+            2. 【縮寫保護】：如果輸入是 PMMA, PVC, PTFE, PET 等常見縮寫，請直接回傳該縮寫。
+            3. 若有多種異構物，自動選擇最常見者。
+            4. 無法辨識回傳：UNKNOWN
             輸入：${q}`;
 
             try {
@@ -236,4 +239,3 @@
         }
     </script>
 </body>
-</html>
