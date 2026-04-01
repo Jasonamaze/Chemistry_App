@@ -18,11 +18,13 @@
         @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
         .animate-fade-in { animation: fadeIn 0.4s ease-out; }
         @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+        /* 隱藏滾動條但保持功能 */
+        .no-scrollbar::-webkit-scrollbar { display: none; }
+        .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
     </style>
 </head>
 <body class="min-h-screen p-3 flex flex-col items-center">
 
-    <!-- 容器 p-4 以適應 iPhone -->
     <div class="max-w-xl w-full bg-white rounded-3xl shadow-2xl p-4 mt-2 relative border border-gray-100">
         
         <button onclick="toggleKeySettings()" class="absolute top-4 right-4 text-gray-400 hover:text-blue-500 transition-colors">
@@ -34,14 +36,13 @@
 
         <div class="text-center mb-6">
             <h1 class="text-xl font-bold text-slate-800 flex justify-center items-center gap-2">
-                <span class="text-2xl">🧪</span> 有機分子查詢
+                <span class="text-2xl">🧪</span> 有機分子與異構物
             </h1>
             <p class="text-slate-400 text-[10px] mt-1 font-medium tracking-wide uppercase">Gemini 2.5 Flash Lite 驅動</p>
         </div>
 
-        <!-- 搜尋列優化：w-20 固定按鈕寬度 -->
-        <div class="flex flex-nowrap gap-2 mb-6">
-            <input type="text" id="chemName" placeholder="輸入名稱 (如 PMMA)..." 
+        <div class="flex flex-nowrap gap-2 mb-4">
+            <input type="text" id="chemName" placeholder="輸入名稱或分子式 (如 C4H10)..." 
                 class="flex-1 min-w-0 bg-slate-50 border-0 rounded-xl px-3 py-3 focus:ring-2 focus:ring-blue-400 outline-none text-slate-700 shadow-inner text-sm">
             <button onclick="searchCompound()" id="searchBtn" 
                 class="w-20 bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 rounded-xl shadow-lg active:scale-95 transition-all disabled:opacity-50 text-sm flex-shrink-0">
@@ -49,10 +50,16 @@
             </button>
         </div>
 
+        <!-- 異構物列表區域 -->
+        <div id="isomerSection" class="hidden mb-6">
+            <p class="text-[9px] font-black text-slate-400 uppercase mb-2 ml-1">發現異構物清單：</p>
+            <div id="isomerList" class="flex flex-wrap gap-2"></div>
+        </div>
+
         <div id="resultArea" class="hidden border-t border-slate-50 pt-4">
             <div id="loading" class="text-center py-8">
                 <div class="loader"></div>
-                <p id="loadingText" class="text-slate-400 text-xs mt-3 font-medium italic">連線中...</p>
+                <p id="loadingText" class="text-slate-400 text-xs mt-3 font-medium italic">分析中...</p>
             </div>
 
             <div id="content" class="hidden text-center animate-fade-in">
@@ -76,15 +83,13 @@
             </div>
         </div>
 
+        <!-- 錯誤診斷區 -->
         <div id="errorMessage" class="hidden mt-4 p-4 bg-rose-50 border-l-4 border-rose-500 text-rose-800 rounded-xl shadow-sm">
             <p id="errorTitle" class="font-black text-[10px] uppercase tracking-wider mb-1"></p>
             <p id="errorDetail" class="text-[10px] leading-relaxed opacity-90"></p>
-            <div id="aiResponseBox" class="mt-3 p-2 bg-white bg-opacity-60 rounded-lg border border-rose-100 hidden">
-                <p class="text-[8px] font-black text-rose-300 uppercase mb-0.5">AI 回覆內容：</p>
-                <p id="aiRawText" class="text-[9px] font-mono break-all text-slate-600"></p>
-            </div>
         </div>
 
+        <!-- 設定彈窗 -->
         <div id="keyModal" class="hidden fixed inset-0 bg-slate-900/60 backdrop-blur-sm flex items-center justify-center p-4 z-50">
             <div class="bg-white rounded-3xl p-6 w-full max-w-sm shadow-2xl">
                 <h3 class="font-bold text-lg text-slate-800 mb-2">🔑 API 設定</h3>
@@ -111,9 +116,9 @@
         const loadText = document.getElementById('loadingText');
         const content = document.getElementById('content');
         const errBox = document.getElementById('errorMessage');
-        const aiBox = document.getElementById('aiResponseBox');
-        const aiRawText = document.getElementById('aiRawText');
         const searchBtn = document.getElementById('searchBtn');
+        const isomerSection = document.getElementById('isomerSection');
+        const isomerList = document.getElementById('isomerList');
 
         window.onload = () => {
             const savedKey = localStorage.getItem('gemini_api_key');
@@ -130,8 +135,8 @@
             if (confirm("確定清除？")) { localStorage.removeItem('gemini_api_key'); document.getElementById('apiKeyInput').value = ""; }
         }
 
-        async function searchCompound() {
-            const name = document.getElementById('chemName').value.trim();
+        async function searchCompound(manualName = null) {
+            const name = manualName || document.getElementById('chemName').value.trim();
             if (!name) return;
             const apiKey = localStorage.getItem('gemini_api_key');
             if (!apiKey) { toggleKeySettings(); return; }
@@ -141,36 +146,40 @@
             loader.classList.remove('hidden');
             content.classList.add('hidden');
             errBox.classList.add('hidden');
-            aiBox.classList.add('hidden');
-            loadText.innerText = "AI 正在分析中...";
+            
+            // 如果不是手動點擊異構物，則先清空舊的異構物列表
+            if (!manualName) isomerSection.classList.add('hidden');
+
+            loadText.innerText = "正在分析化學結構與異構物...";
 
             try {
-                // 1. AI 轉譯
-                let iupacName = await translate(name, apiKey);
-                loadText.innerText = `正在檢索：${iupacName}...`;
-
-                // 2. 搜尋 CID (多段式檢索)
-                let cid = await getCID(iupacName) || await getCID(name);
+                // 1. 呼叫 AI 進行分析 (獲取 JSON：包含標準名稱與異構物清單)
+                const analysis = await analyzeChemistry(name, apiKey);
                 
-                // --- 優化：高分子重試機制 (PMMA/PET 等縮寫處理) ---
-                if (!cid) {
-                    // 如果查不到，且名稱看起來像聚合物 (包含 Poly 或縮寫中包含 P)
-                    // 淨化名稱：移除 Poly、括號、以及多餘空格
-                    let cleanName = iupacName.replace(/poly/i, "").replace(/[()]/g, "").trim();
-                    
-                    if (cleanName !== iupacName) {
-                        loadText.innerText = `查無聚合物，嘗試檢索單體：${cleanName}...`;
-                        cid = await getCID(cleanName);
-                        if (cid) iupacName = cleanName;
-                    }
+                // 如果回傳了異構物清單且當前不是在點擊特定異構物，則顯示清單
+                if (!manualName && analysis.isomers && analysis.isomers.length > 1) {
+                    renderIsomers(analysis.isomers);
                 }
 
-                if (!cid) throw { stage: "資料庫階段", message: "找不到該化學物質。請嘗試輸入標準單體名稱（如 Methyl methacrylate）。" };
+                const iupacName = analysis.standardName;
+                loadText.innerText = `正在檢索：${iupacName}...`;
 
-                // 3. 獲取資料
+                // 2. 搜尋 CID (含 Poly 容錯)
+                let cid = await getCID(iupacName) || await getCID(name);
+                
+                if (!cid && iupacName.toLowerCase().includes("poly")) {
+                    let cleanName = iupacName.replace(/poly/i, "").replace(/[()]/g, "").trim();
+                    loadText.innerText = `重試(單體)：${cleanName}...`;
+                    cid = await getCID(cleanName);
+                    if (cid) iupacName = cleanName;
+                }
+
+                if (!cid) throw { stage: "資料庫階段", message: "找不到該物質。若為分子式，請點擊下方的異構物進行查詢。" };
+
+                // 3. 獲取詳情
                 const details = await getDetails(cid);
                 
-                document.getElementById('origInput').innerText = name;
+                document.getElementById('origInput').innerText = manualName ? "選定異構物" : name;
                 document.getElementById('displayTitle').innerText = iupacName;
                 document.getElementById('formula').innerText = details?.MolecularFormula || "N/A";
                 document.getElementById('molWeight').innerText = details?.MolecularWeight ? (details.MolecularWeight + " g/mol") : "N/A";
@@ -184,46 +193,54 @@
                 errBox.classList.remove('hidden');
                 document.getElementById('errorTitle').innerText = `錯誤：${err.stage || "系統"}`;
                 document.getElementById('errorDetail').innerText = err.message;
-                if (err.raw) { aiBox.classList.remove('hidden'); aiRawText.innerText = err.raw; }
             } finally {
                 searchBtn.disabled = false;
             }
         }
 
-        async function translate(q, key) {
-            // 切換至 gemini-2.5-flash-lite
+        async function analyzeChemistry(q, key) {
             const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-lite:generateContent?key=${key}`;
             
             const prompt = `你是一位有機化學專家。
-            任務：將輸入轉為標準英文 IUPAC 名稱。
-            規則：
-            1. 只回傳英文名，禁止任何解釋。
-            2. 【聚合物處理】：如果輸入是 PMMA, PET, PVC 等高分子，請回傳其【單體 (Monomer)】的 IUPAC 名稱（例如 PMMA 請回傳 Methyl methacrylate）。
-            3. 若有多種異構物，自動選擇最常見者。
-            4. 無法辨識回傳：UNKNOWN
-            輸入：${q}`;
-
-            try {
-                const resp = await fetch(url, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ contents: [{ parts: [{ text: prompt }] }] })
-                });
-
-                if (!resp.ok) {
-                    const errData = await resp.json();
-                    throw new Error(errData.error?.message || `HTTP ${resp.status}`);
-                }
-
-                const data = await resp.json();
-                const res = data.candidates?.[0]?.content?.parts?.[0]?.text?.trim();
-                
-                if (!res || res.includes("UNKNOWN")) throw { message: "AI 無法辨識名稱。", raw: res || "無回應" };
-                return res.replace(/["']/g, "").split('\n')[0];
-            } catch (e) {
-                if (e.stage) throw e;
-                throw { stage: "AI 階段", message: e.message, raw: "連線問題" };
+            任務：分析輸入「${q}」。
+            1. 辨識其標準英文 IUPAC 名稱。
+            2. 如果輸入是分子式（如 C4H10）或具有多個異構物，請列出其所有主要的結構異構物名稱。
+            3. 如果輸入是 PMMA, PET 等聚合物，請回傳其單體名稱。
+            
+            請嚴格以 JSON 格式回傳，格式如下：
+            {
+              "standardName": "最主要的一個標準 IUPAC 名稱",
+              "isomers": ["異構物名稱1", "異構物名稱2", ...]
             }
+            不要回傳任何 JSON 以外的文字。`;
+
+            const resp = await fetch(url, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ contents: [{ parts: [{ text: prompt }] }] })
+            });
+
+            if (!resp.ok) throw new Error(`AI 連線失敗 (HTTP ${resp.status})`);
+            const data = await resp.json();
+            const text = data.candidates?.[0]?.content?.parts?.[0]?.text?.replace(/```json|```/g, "").trim();
+            
+            try {
+                return JSON.parse(text);
+            } catch (e) {
+                return { standardName: text.split('\n')[0], isomers: [] };
+            }
+        }
+
+        function renderIsomers(list) {
+            isomerList.innerHTML = "";
+            list.forEach(name => {
+                const btn = document.createElement('button');
+                btn.className = "bg-slate-100 text-slate-600 text-[10px] font-bold px-3 py-1.5 rounded-lg border border-slate-200 active:bg-blue-500 active:text-white transition-all";
+                btn.innerText = name;
+                btn.onclick = () => searchCompound(name);
+                isomerList.appendChild(btn);
+            });
+            isomerSection.classList.remove('hidden');
         }
 
         async function getCID(name) {
