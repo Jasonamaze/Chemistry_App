@@ -39,7 +39,7 @@
             <h1 class="text-xl font-bold text-slate-800 flex justify-center items-center gap-2">
                 <span class="text-2xl">🧪</span> 分子結構與異構物
             </h1>
-            <p class="text-slate-400 text-[10px] mt-1 font-medium tracking-wide uppercase">Gemini 2.5 Flash Lite 驅動</p>
+            <p class="text-slate-400 text-[10px] mt-1 font-medium tracking-wide uppercase">Gemini 2.0 Flash Lite 驅動</p>
         </div>
 
         <div class="flex flex-nowrap gap-2 mb-4">
@@ -108,7 +108,7 @@
     </div>
 
     <footer class="mt-6 text-[8px] text-slate-300 font-medium tracking-widest text-center uppercase">
-        © 2026 GEMINI 2.5 FLASH LITE & PUBCHEM
+        © 2026 GEMINI 2.0 FLASH LITE & PUBCHEM
     </footer>
 
     <script>
@@ -197,7 +197,7 @@
         }
 
         async function analyzeChemistry(q, key) {
-            const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-lite:generateContent?key=${key}`;
+            const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash-lite:generateContent?key=${key}`;
             
             const prompt = `你是一位有機化學專家。
             任務：分析輸入「${q}」。
